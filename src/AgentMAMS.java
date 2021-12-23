@@ -14,12 +14,15 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import mams.Slot;
 
 public class AgentMAMS extends Agent {
     private AgentGui myGui;
     private String targetBookTitle;
     private Integer money = 100;
-
+    private Double[][] CAL;
+    private ArrayList<Slot> availableSlots;
+    
     //list of found sellers
     private AID[] sellerAgents;
 
@@ -34,7 +37,7 @@ public class AgentMAMS extends Agent {
 
         //Initialisation of the calendar
         Double pref=0.0;
-        Double[][] CAL = new Double[7][];//'2D array'
+        this.CAL = new Double[7][];//'2D array'
         for (int i = 0; i< CAL.length; i++)
             CAL[i] = new Double[24];
         for(int i = 0; i< CAL.length; i++)
@@ -70,8 +73,9 @@ public class AgentMAMS extends Agent {
                 //System.out.println(day+" at "+y+" h my preference is " + CAL[i][y]);
             }
 
-            myGui = new AgentGui(this, CAL);
+            myGui = new AgentGui(this, this.CAL);
             myGui.display();
+
 
         /*
         if (args != null && args.length > 0) interval = Integer.parseInt(args[0].toString());
@@ -109,6 +113,40 @@ public class AgentMAMS extends Agent {
         addBehaviour(new OneShotBehaviour() {
             public void action() {
                 System.out.println(getAID().getLocalName() + ": Launched procedure for meeting scheduling");
+                //Setup available slots list
+                availableSlots = new ArrayList<Slot>();
+                for(int i = 0; i< CAL.length; i++){
+                    for (int y = 0; y< CAL[i].length; y++) {
+                        if (CAL[i][y]!=0){
+                            Slot slot = new Slot(Day.MONDAY,y,CAL[i][y]);
+                            switch (i){
+                                case 0:
+                                    slot.setDay(Day.MONDAY);
+                                    break;
+                                case 1:
+                                    slot.setDay(Day.TUESDAY);
+                                    break;
+                                case 2:
+                                    slot.setDay(Day.WEDNESDAY);
+                                    break;
+                                case 3:
+                                    slot.setDay(Day.THURSDAY);
+                                    break;
+                                case 4:
+                                    slot.setDay(Day.FRIDAY);
+                                    break;
+                                case 5:
+                                    slot.setDay(Day.SATURDAY);
+                                    break;
+                                case 6:
+                                    slot.setDay(Day.SUNDAY);
+                                    break;
+                            }
+                            availableSlots.add(slot);
+                        }
+                    }
+                }
+                System.out.println(getAID().getLocalName() + ": My available slots are : \n"+availableSlots);   
             }
         });
     }
@@ -118,7 +156,7 @@ public class AgentMAMS extends Agent {
         System.out.println("Agent " + getAID().getLocalName() + " terminated.");
     }
 
-/*
+
     private class RequestPerformer extends Behaviour {
         private AID bestSeller;
         private int bestPrice;
@@ -223,5 +261,5 @@ public class AgentMAMS extends Agent {
             return ((step == 2 && bestSeller == null) || (step == 3 && tooexpensive) || step == 4);
         }
     }
-    */
+    
 }
