@@ -1,4 +1,4 @@
-package jadelab2;
+package mams;
 
 import jade.core.Agent;
 import jade.core.AID;
@@ -15,8 +15,8 @@ import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
-public class BookBuyerAgent extends Agent {
-    private BookBuyerGui myGui;
+public class AgentMAMS extends Agent {
+    private AgentGui myGui;
     private String targetBookTitle;
     private Integer money = 100;
 
@@ -26,8 +26,7 @@ public class BookBuyerAgent extends Agent {
     protected void setup() {
         targetBookTitle = "";
         System.out.println("Hello! " + getAID().getLocalName() + " is ready for the purchase order.");
-        myGui = new BookBuyerGui(this);
-        myGui.display();
+
         //time interval for buyer for sending subsequent CFP
         //as a CLI argument
         int interval = 20000;
@@ -71,6 +70,10 @@ public class BookBuyerAgent extends Agent {
                 //System.out.println(day+" at "+y+" h my preference is " + CAL[i][y]);
             }
 
+            myGui = new AgentGui(this, CAL);
+            myGui.display();
+
+        /*
         if (args != null && args.length > 0) interval = Integer.parseInt(args[0].toString());
         addBehaviour(new TickerBehaviour(this, interval) {
             protected void onTick() {
@@ -98,23 +101,24 @@ public class BookBuyerAgent extends Agent {
                 }
             }
         });
+        */
     }
 
-    //invoked from GUI, when purchase was ordered
-    public void lookForTitle(final String title) {
+    //invoked from GUI, when meeting button is pressed
+    public void lookForMeeting() {
         addBehaviour(new OneShotBehaviour() {
             public void action() {
-                targetBookTitle = title;
-                System.out.println(getAID().getLocalName() + ": purchase order for " + targetBookTitle + " accepted");
+                System.out.println(getAID().getLocalName() + ": Launched procedure for meeting scheduling");
             }
         });
     }
 
     protected void takeDown() {
         myGui.dispose();
-        System.out.println("Buyer agent " + getAID().getLocalName() + " terminated.");
+        System.out.println("Agent " + getAID().getLocalName() + " terminated.");
     }
 
+/*
     private class RequestPerformer extends Behaviour {
         private AID bestSeller;
         private int bestPrice;
@@ -219,4 +223,5 @@ public class BookBuyerAgent extends Agent {
             return ((step == 2 && bestSeller == null) || (step == 3 && tooexpensive) || step == 4);
         }
     }
+    */
 }

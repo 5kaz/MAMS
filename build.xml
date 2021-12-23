@@ -1,4 +1,4 @@
-<project name="JadeLab2" default="run" basedir=".">
+<project name="MAMS" default="run" basedir=".">
   <property name="src" location="src"/>
   <property name="build" location="build"/>
 
@@ -19,7 +19,7 @@
   <target name="run" description="create agents">
     <java fork="true" classpath="jade/lib/jade.jar;build" classname="jade.Boot">
       <arg value="-gui"/>
-      <arg value="buyer1:jadelab2.BookBuyerAgent(5000);buyer2:jadelab2.BookBuyerAgent(7000);seller1:jadelab2.BookSellerAgent;seller2:jadelab2.BookSellerAgent"/>
+      <arg value="agent1:mams.AgentMAMS(5000);agent2:mams.AgentMAMS(5000)"/>
     </java>
   </target>
 </project>
