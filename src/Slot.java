@@ -2,7 +2,7 @@ package mams;
 import java.text.DecimalFormat;
 
 
-public class Slot<Day,Int>{
+public class Slot<Day,Int> implements Comparable<Slot>{
 
   private Day day;
   private Int hour;
@@ -29,5 +29,16 @@ public class Slot<Day,Int>{
   @Override
   public String toString() {
       return "\n"+this.day+"/"+this.hour+":00 -> "+new DecimalFormat("#.##").format(this.preference);
+  }
+
+  @Override
+  public int compareTo(Slot o){
+    if (this.preference < o.preference){
+      return -1;
+    }else if (this.preference == o.preference){
+      return 0;
+    }else{
+      return 1;
+    }
   }
 }

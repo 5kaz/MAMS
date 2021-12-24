@@ -11,6 +11,7 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 
 import javax.swing.*;
+import java.util.*;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -28,7 +29,7 @@ public class AgentMAMS extends Agent {
 
     protected void setup() {
         targetBookTitle = "";
-        
+
         //time interval for buyer for sending subsequent CFP
         //as a CLI argument
         int interval = 20000;
@@ -128,6 +129,10 @@ public class AgentMAMS extends Agent {
                     }
                 }
                 System.out.println(getAID().getLocalName() + ": My available slots are : \n"+availableSlots);
+                //Sort the ArrayList by preference
+                Collections.sort(availableSlots, Collections.reverseOrder());   
+                System.out.println(getAID().getLocalName() + ": My two best slots are : "+availableSlots.get(0)+availableSlots.get(1)+"\n");
+
                 
                 //Update list of available agents
                 DFAgentDescription template = new DFAgentDescription();
