@@ -24,16 +24,29 @@ public class AgentMAMS extends Agent {
     private ArrayList<Slot> availableSlots;
     
     //list of found sellers
-    private AID[] sellerAgents;
+    private AID[] agents;
 
     protected void setup() {
         targetBookTitle = "";
-        System.out.println("Hello! " + getAID().getLocalName() + " is ready for the purchase order.");
-
+        
         //time interval for buyer for sending subsequent CFP
         //as a CLI argument
         int interval = 20000;
         Object[] args = getArguments();
+        
+        //service registration at DF
+        DFAgentDescription dfd = new DFAgentDescription();
+        dfd.setName(getAID());
+        ServiceDescription sd = new ServiceDescription();
+        sd.setType("meeting-scheduling");
+        sd.setName("JADE-meeting-scheduling");
+        dfd.addServices(sd);
+        try {
+        DFService.register(this, dfd);
+        }
+        catch (FIPAException fe) {
+        fe.printStackTrace();
+        }
 
         //Initialisation of the calendar
         Double pref=0.0;
@@ -68,44 +81,12 @@ public class AgentMAMS extends Agent {
                     case 6 :
                         day = ("Sunday");
                         break;
-
                 }
                 //System.out.println(day+" at "+y+" h my preference is " + CAL[i][y]);
             }
 
             myGui = new AgentGui(this, this.CAL);
             myGui.display();
-
-
-        /*
-        if (args != null && args.length > 0) interval = Integer.parseInt(args[0].toString());
-        addBehaviour(new TickerBehaviour(this, interval) {
-            protected void onTick() {
-                //search only if the purchase task was ordered
-                if (!targetBookTitle.equals("")) {
-
-                    System.out.println(getAID().getLocalName() + ": I'm looking for " + targetBookTitle);
-                    //update a list of known sellers (DF)
-                    DFAgentDescription template = new DFAgentDescription();
-                    ServiceDescription sd = new ServiceDescription();
-                    sd.setType("book-selling");
-                    template.addServices(sd);
-                    try {
-                        DFAgentDescription[] result = DFService.search(myAgent, template);
-                        System.out.println(getAID().getLocalName() + ": the following sellers have been found");
-                        sellerAgents = new AID[result.length];
-                        for (int i = 0; i < result.length; ++i) {
-                            sellerAgents[i] = result[i].getName();
-                            System.out.println(sellerAgents[i].getLocalName());
-                        }
-                    } catch (FIPAException fe) {
-                        fe.printStackTrace();
-                    }
-                    myAgent.addBehaviour(new RequestPerformer());
-                }
-            }
-        });
-        */
     }
 
     //invoked from GUI, when meeting button is pressed
@@ -146,7 +127,25 @@ public class AgentMAMS extends Agent {
                         }
                     }
                 }
-                System.out.println(getAID().getLocalName() + ": My available slots are : \n"+availableSlots);   
+                System.out.println(getAID().getLocalName() + ": My available slots are : \n"+availableSlots);
+                
+                //Update list of available agents
+                DFAgentDescription template = new DFAgentDescription();
+                ServiceDescription sd = new ServiceDescription();
+                sd.setType("meeting-scheduling");
+                template.addServices(sd);
+                try {
+                    DFAgentDescription[] result = DFService.search(myAgent, template);
+                    System.out.println(getAID().getLocalName() + ": the following agents have been found");
+                    agents = new AID[result.length];
+                    for (int i = 0; i < result.length; ++i) {
+                        agents[i] = result[i].getName();
+                        System.out.println(agents[i].getLocalName());
+                    }
+                } catch (FIPAException fe) {
+                    fe.printStackTrace();
+                }
+                //myAgent.addBehaviour(new RequestPerformer());
             }
         });
     }
@@ -172,8 +171,8 @@ public class AgentMAMS extends Agent {
                 case 0:
                     //call for proposal (CFP) to found sellers
                     ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
-                    for (int i = 0; i < sellerAgents.length; ++i) {
-                        cfp.addReceiver(sellerAgents[i]);
+                    for (int i = 0; i < agents.length; ++i) {
+                        cfp.addReceiver(agents[i]);
                     }
                     cfp.setContent(targetBookTitle);
                     cfp.setConversationId("book-trade");
@@ -197,7 +196,7 @@ public class AgentMAMS extends Agent {
                             }
                         }
                         repliesCnt++;
-                        if (repliesCnt >= sellerAgents.length) {
+                        if (repliesCnt >= agents.length) {
                             //all proposals have been received
                             step = 2;
                         }

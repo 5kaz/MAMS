@@ -28,6 +28,6 @@ public class Slot<Day,Int>{
 
   @Override
   public String toString() {
-      return this.day+"/"+this.hour+":00 -> "+new DecimalFormat("#.##").format(this.preference)+"\n";
+      return "\n"+this.day+"/"+this.hour+":00 -> "+new DecimalFormat("#.##").format(this.preference);
   }
 }
