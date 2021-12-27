@@ -1,8 +1,9 @@
 package mams;
 import java.text.DecimalFormat;
+import java.io.Serializable;
 
 
-public class Slot<Day,Int> implements Comparable<Slot>{
+public class Slot<Day,Int> implements Comparable<Slot>,Serializable{
 
   private Day day;
   private Int hour;
@@ -25,6 +26,12 @@ public class Slot<Day,Int> implements Comparable<Slot>{
 
   public Day getDay() { return day; }
   public Int getHour() { return hour; }
+  public Double getPreference() { return preference; }
+
+  //This function returns true if the compared slot is compatible with the actual slot
+  public boolean isFitting(Slot o){
+    return (this.day == o.getDay() && this.hour.equals(o.getHour()) && this.preference > 0.0 && o.getPreference() > 0.0);
+  }
 
   @Override
   public String toString() {
