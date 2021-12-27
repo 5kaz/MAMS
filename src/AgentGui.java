@@ -53,6 +53,9 @@ AgentGui(AgentMAMS a, Double[][] cal) {
             for (int j = 0; j< CAL[i].length; j++) {
                 data[j][0] = j + ":00";
                 data[j][i+1] = (CAL[i][j]==0?"":new DecimalFormat("#.##").format(CAL[i][j]));
+                if (CAL[i][j] == 1000.0){
+                    data[j][i+1] = "MEETING";
+                }
             }
         }
         JTable calendar = new JTable(data,columns);

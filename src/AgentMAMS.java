@@ -26,7 +26,8 @@ public class AgentMAMS extends Agent {
     private Double[][] CAL;
     private ArrayList<Slot> availableSlots;
     private Slot[] bestSlots;
-
+    private ArrayList<Slot> fittingSlots;
+    private Double treshold = 0.5;
     
     //list of found agents
     private AID[] agents;
@@ -53,8 +54,9 @@ public class AgentMAMS extends Agent {
             fe.printStackTrace();
         }
 
-        //Add cyclic behaviour for handling incoming messages
+        //Add cyclic behaviours for handling incoming messages
         addBehaviour(new OfferRequestsServer());
+        addBehaviour(new ConfirmationServer());
 
         //Initialisation of the calendar
         Double pref=0.0;
@@ -93,48 +95,84 @@ public class AgentMAMS extends Agent {
                 //System.out.println(day+" at "+y+" h my preference is " + CAL[i][y]);
             }
             //Setup available slots list
-            availableSlots = new ArrayList<Slot>();
-            for(int i = 0; i< CAL.length; i++){
-                for (int y = 0; y< CAL[i].length; y++) {
-                    if (CAL[i][y]!=0){
-                        Slot slot = new Slot(Day.MONDAY,y,CAL[i][y]);
-                        switch (i){
-                            case 0:
-                                slot.setDay(Day.MONDAY);
-                                break;
-                            case 1:
-                                slot.setDay(Day.TUESDAY);
-                                break;
-                            case 2:
-                                slot.setDay(Day.WEDNESDAY);
-                                break;
-                            case 3:
-                                slot.setDay(Day.THURSDAY);
-                                break;
-                            case 4:
-                                slot.setDay(Day.FRIDAY);
-                                break;
-                            case 5:
-                                slot.setDay(Day.SATURDAY);
-                                break;
-                            case 6:
-                                slot.setDay(Day.SUNDAY);
-                                break;
-                        }
-                        availableSlots.add(slot);
-                    }
-                }
-            }
+            calToArrayList(CAL);
+
             //System.out.println(getAID().getLocalName() + ": My available slots are : \n"+availableSlots);
             
             //Sort the ArrayList by preference
             Collections.sort(availableSlots, Collections.reverseOrder()); 
                 
-
+            
             myGui = new AgentGui(this, this.CAL);
             myGui.display();
     }
 
+    public void calToArrayList(Double[][] CAL){
+        availableSlots = new ArrayList<Slot>();
+        for(int i = 0; i< CAL.length; i++){
+            for (int y = 0; y< CAL[i].length; y++) {
+                if ((Double)CAL[i][y]!=0){
+                    Slot slot = new Slot(Day.MONDAY,y,(Double)CAL[i][y]);
+                    switch (i){
+                        case 0:
+                            slot.setDay(Day.MONDAY);
+                            break;
+                        case 1:
+                            slot.setDay(Day.TUESDAY);
+                            break;
+                        case 2:
+                            slot.setDay(Day.WEDNESDAY);
+                            break;
+                        case 3:
+                            slot.setDay(Day.THURSDAY);
+                            break;
+                        case 4:
+                            slot.setDay(Day.FRIDAY);
+                            break;
+                        case 5:
+                            slot.setDay(Day.SATURDAY);
+                            break;
+                        case 6:
+                            slot.setDay(Day.SUNDAY);
+                            break;
+                    }
+                    availableSlots.add(slot);
+                }
+            }
+        }
+    }
+
+    public void updateCal(Slot s){
+        Day d = (Day) s.getDay();
+        int h = (int) s.getHour();
+        Double pref = 1000.0;
+        switch (d){
+            case MONDAY:
+                CAL[0][h] = pref;
+                break;
+            case TUESDAY:
+                CAL[1][h] = pref;
+                break;            
+            case WEDNESDAY:
+                CAL[2][h] = pref;
+                break;
+            case THURSDAY:
+                CAL[3][h] = pref;
+                break;
+            case FRIDAY:
+                CAL[4][h] = pref;
+                break;
+            case SATURDAY:
+                CAL[5][h] = pref;
+                break;
+            case SUNDAY:
+                CAL[6][h] = pref;
+                break;
+        }
+        myGui.dispose();
+        myGui = new AgentGui(this, this.CAL);
+        myGui.display();
+    }
     //invoked from GUI, when meeting button is pressed
     public void lookForMeeting() {
         addBehaviour(new OneShotBehaviour() {
@@ -169,15 +207,18 @@ public class AgentMAMS extends Agent {
         private MessageTemplate mt;
         private int step = 0;
    	    private int repliesCnt = 0;
+        private int confirmCnt = 0;
         private long timeout = System.currentTimeMillis() + 3000;
         private int startIndex = 0;
         private HashMap<AID,Slot[]> othersSlots;
         private int iteration = 1;
+        private Slot bestSlot;
 
         public void action() {
             switch (step) {
                 case 0:
                     repliesCnt = 0;
+                    confirmCnt = 0;
                     othersSlots = new HashMap<AID,Slot[]>();
                     //Setup bestSlots list
                     bestSlots[0] = availableSlots.get(startIndex);
@@ -242,20 +283,28 @@ public class AgentMAMS extends Agent {
                     break;
                 case 2:
                     //Process proposals
-                    Slot bestSlot = findDeal(othersSlots);
+                    bestSlot = findDeal(othersSlots);
                     if (bestSlot != null) { //if a deal has been found
-                        System.out.println("FOUND THIS SPOT :" + bestSlot);
-                        /*ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
-                        order.addReceiver(bestSeller);
-                        order.setContent(targetBookTitle);
-                        order.setConversationId("book-trade");
-                        order.setReplyWith("order" + System.currentTimeMillis());
-                        myAgent.send(order);
-                        mt = MessageTemplate.and(MessageTemplate.MatchConversationId("book-trade"),
-                                MessageTemplate.MatchInReplyTo(order.getReplyWith()));
-                        */
+                        System.out.println("\n=== FOUND A SLOT === " + bestSlot);
+                        ACLMessage proposal = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+                        for (int i = 0; i < agents.length; ++i) {
+                            if (getAID().equals(agents[i]) == false){
+                                proposal.addReceiver(agents[i]);
+                            }
+                        }
+                        try{
+                            proposal.setContentObject(bestSlot);
+                        }catch(IOException e){
+                            e.printStackTrace();
+                        }
+                        proposal.setConversationId("meeting-scheduling");
+                        proposal.setReplyWith("proposal" + System.currentTimeMillis());
+                        myAgent.send(proposal);
+                        mt = MessageTemplate.and(MessageTemplate.MatchConversationId("meeting-scheduling"),
+                                MessageTemplate.MatchInReplyTo(proposal.getReplyWith()));
+                        
                         step = 3;
-
+                        break;
                     }
                     else {
                     //no deal found
@@ -267,16 +316,27 @@ public class AgentMAMS extends Agent {
                     break;
 
                 case 3:
-                    //seller confirms the transaction
+                    //agents confirms the transaction
                     reply = myAgent.receive(mt);
                     if (reply != null) {
                         if (reply.getPerformative() == ACLMessage.INFORM) {
-                            //purchase succeeded
-
-                            //myAgent.doDelete();
+                            confirmCnt++;
+                            if (confirmCnt >= (agents.length-1)) {
+                            //all confirmations have been received
+                                System.out.println(getAID().getLocalName()+": Received all the confirmations");
+                                updateCal(bestSlot);
+                                availableSlots.remove(bestSlot);
+                                // TODO
+                                // Ajouter le slot dans une liste de slots réservés
+                                // Faire apparaitre dans l'UI
+                                // Retirer le slot de la liste des slots disponibles
+                                step = 4;
+                            }
                         } else {
+                            //If the response is NEGATIVE
+                            //TODO
                         }
-                        step = 4;    //this state ends the purchase process
+                            //this state ends the purchase process
                     } else {
                         block();
                     }
@@ -290,14 +350,14 @@ public class AgentMAMS extends Agent {
             if (step == 3){
             }
             //process terminates here if purchase has failed (title not on sale) or book was successfully bought
-            return ((step == 3) || step == 4);
+            return (step == 4);
         }
 
         private Slot findDeal(HashMap<AID,Slot[]> othersSlots){
             //Slot bestSlot = new Slot();
             ArrayList<Slot> possibleSlots = new ArrayList<Slot>();
             Double[] pref = new Double[2];
-            Double treshold = 0.6;
+            
             //Calc possible slots 
             for (int slotIndex=0; slotIndex<bestSlots.length; slotIndex++){
                 Double preference = bestSlots[slotIndex].getPreference();
@@ -353,7 +413,6 @@ public class AgentMAMS extends Agent {
 
     private class OfferRequestsServer extends CyclicBehaviour {
         private Slot[] initiatorBestSlots;
-        private ArrayList<Slot> fittingSlots;
 
         public void action() {
             MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.CFP);
@@ -395,6 +454,50 @@ public class AgentMAMS extends Agent {
                     reply.setContent("not-available");
 	            }
 	            myAgent.send(reply);
+            }
+            else{
+                block();
+            }
+        }
+    }
+
+    private class ConfirmationServer extends CyclicBehaviour {
+        private Slot foundBestSlot;
+
+        public void action() {
+            MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
+            ACLMessage msg = myAgent.receive(mt);
+            if (msg != null) {
+                boolean confirm = false;
+
+                try{
+                    Slot foundBestSlot = (Slot) msg.getContentObject();
+                    ACLMessage reply = msg.createReply();
+                    for (Slot s : fittingSlots){
+                        if (s.isFitting(foundBestSlot)){
+                            System.out.println(getAID().getLocalName()+": I confirm this spot is good enough for me"+s);
+                            confirm = true;
+                            updateCal(s);
+                            availableSlots.remove(s);
+                            // TODO
+                            // Ajouter le slot dans une liste de slots réservés
+                            break;
+                        }
+                    }
+                    if (confirm){
+                        reply.setPerformative(ACLMessage.INFORM);
+                    }
+                    else {
+                        reply.setPerformative(ACLMessage.REFUSE);
+                        reply.setContent("not-available");
+                    }
+	                myAgent.send(reply);
+                }catch(UnreadableException e){
+                    e.printStackTrace();
+                }
+                
+
+                
             }
             else{
                 block();
