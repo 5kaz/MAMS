@@ -145,7 +145,7 @@ public class AgentMAMS extends Agent {
     public void updateCal(Slot s){
         Day d = (Day) s.getDay();
         int h = (int) s.getHour();
-        Double pref = 1000.0;
+        Double pref = -1000.0;
         switch (d){
             case MONDAY:
                 CAL[0][h] = pref;
@@ -328,8 +328,6 @@ public class AgentMAMS extends Agent {
                                 availableSlots.remove(bestSlot);
                                 // TODO
                                 // Ajouter le slot dans une liste de slots réservés
-                                // Faire apparaitre dans l'UI
-                                // Retirer le slot de la liste des slots disponibles
                                 step = 4;
                             }
                         } else {
