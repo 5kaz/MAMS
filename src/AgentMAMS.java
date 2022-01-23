@@ -30,16 +30,23 @@ public class AgentMAMS extends Agent {
     private Double treshold = 0.5;
     
     //list of found agents
+    private ArrayList<String> contacts;
+    private ArrayList<AID> allAgents;
     private AID[] agents;
 
     protected void setup() {
         this.bestSlots = new Slot[2];
-
+        contacts = new ArrayList<String>();
         //time interval for buyer for sending subsequent CFP
         //as a CLI argument
         int interval = 20000;
         Object[] args = getArguments();
-        
+        if(args!=null) {
+            for (int i = 0; i < args.length; i++) {
+                //System.out.println("MES CONTACTS"+args[i]);
+                contacts.add(args[i].toString());
+            }
+        }
         //service registration at DF
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(getAID());
@@ -183,11 +190,21 @@ public class AgentMAMS extends Agent {
                 ServiceDescription sd = new ServiceDescription();
                 sd.setType("meeting-scheduling");
                 template.addServices(sd);
+                int nbresult=0;
                 try {
                     DFAgentDescription[] result = DFService.search(myAgent, template);
-                    agents = new AID[result.length];
+                    allAgents = new ArrayList<AID>();
                     for (int i = 0; i < result.length; ++i) {
-                        agents[i] = result[i].getName();
+                        for (String contact:contacts){
+                            if(Objects.equals(contact,result[i].getName().getLocalName())){
+                                allAgents.add(result[i].getName());
+                                nbresult++;
+                            }
+                        }
+                    }
+                    agents = new AID[nbresult];
+                    for (int i=0;i<nbresult;i++){
+                        agents[i]=allAgents.get(i);
                     }
                 } catch (FIPAException fe) {
                     fe.printStackTrace();
