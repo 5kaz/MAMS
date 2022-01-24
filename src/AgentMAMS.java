@@ -190,13 +190,14 @@ public class AgentMAMS extends Agent {
                 ServiceDescription sd = new ServiceDescription();
                 sd.setType("meeting-scheduling");
                 template.addServices(sd);
-                int nbresult=0;
+                int nbresult=1;
                 try {
                     DFAgentDescription[] result = DFService.search(myAgent, template);
                     allAgents = new ArrayList<AID>();
+                    allAgents.add(getAID());
                     for (int i = 0; i < result.length; ++i) {
                         for (String contact:contacts){
-                            if(Objects.equals(contact,result[i].getName().getLocalName()) || Objects.equals(getAID().getLocalName(),result[i].getName().getLocalName()) ){
+                            if(Objects.equals(contact,result[i].getName().getLocalName())){
                                 allAgents.add(result[i].getName());
                                 nbresult++;
                             }
@@ -494,8 +495,6 @@ public class AgentMAMS extends Agent {
                             confirm = true;
                             updateCal(s);
                             availableSlots.remove(s);
-                            // TODO
-                            // Ajouter le slot dans une liste de slots réservés
                             break;
                         }
                     }
@@ -510,9 +509,6 @@ public class AgentMAMS extends Agent {
                 }catch(UnreadableException e){
                     e.printStackTrace();
                 }
-                
-
-                
             }
             else{
                 block();
