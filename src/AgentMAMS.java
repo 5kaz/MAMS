@@ -244,43 +244,50 @@ public class AgentMAMS extends Agent {
                     repliesCnt = 0;
                     confirmCnt = 0;
                     othersSlots = new HashMap<AID,Slot[]>();
-                    //Setup bestSlots list
-                    if(availableSlots.get(startIndex).isBooked()||availableSlots.get(startIndex+1).isBooked())
-                    {
-                        startIndex += 1;
-                        iteration++;
-                        step = 0;
+                    if(availableSlots.size()-startIndex<=2){
+                        step=4;
+                        System.out.println("Impossible to find a meeting with those persons.");
                     }
-                    else
-                    {
-                        bestSlots[0] = availableSlots.get(startIndex);
-                        availableSlots.get(startIndex).setTimeBooked(System.currentTimeMillis());
-                        bestSlots[1] = availableSlots.get(startIndex+1);
-                        availableSlots.get(startIndex+1).setTimeBooked(System.currentTimeMillis());
+                    else{
+                        //Setup bestSlots list
+                        if(availableSlots.get(startIndex).isBooked()||availableSlots.get(startIndex+1).isBooked())
+                        {
+                            startIndex += 1;
+                            iteration++;
+                            step = 0;
+                            System.out.println("One of my slot is reserved.");
+                        }
+                        else
+                        {
+                            bestSlots[0] = availableSlots.get(startIndex);
+                            availableSlots.get(startIndex).setTimeBooked(System.currentTimeMillis());
+                            bestSlots[1] = availableSlots.get(startIndex+1);
+                            availableSlots.get(startIndex+1).setTimeBooked(System.currentTimeMillis());
 
-                        System.out.println(getAID().getLocalName() + ": [Iteration "+iteration+"]  My two best slots are : "+bestSlots[0]+bestSlots[1]+"\n");
-                        //call for proposal (CFP) to found sellers
-                        ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
-                        for (int i = 0; i < agents.length; ++i) {
-                            if (getAID().equals(agents[i]) == false){
-                                cfp.addReceiver(agents[i]);
-                                System.out.println(getAID().getLocalName() + ": Added "+agents[i].getLocalName()+" to receivers ");
+                            System.out.println(getAID().getLocalName() + ": [Iteration "+iteration+"]  My two best slots are : "+bestSlots[0]+bestSlots[1]+"\n");
+                            //call for proposal (CFP) to found sellers
+                            ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
+                            for (int i = 0; i < agents.length; ++i) {
+                                if (getAID().equals(agents[i]) == false){
+                                    cfp.addReceiver(agents[i]);
+                                    System.out.println(getAID().getLocalName() + ": Added "+agents[i].getLocalName()+" to receivers ");
+                                }
                             }
-                        }
-                        //we provide the bestSlots
-                        try{
-                            cfp.setContentObject(bestSlots);
-                        }catch(IOException e){
-                            e.printStackTrace();
-                        }
-                        cfp.setConversationId("meeting-scheduling");
-                        cfp.setReplyWith("cfp" + System.currentTimeMillis()); //unique value
-                        myAgent.send(cfp);
-                        System.out.println(getAID().getLocalName() + ": Sent call for proposal");
+                            //we provide the bestSlots
+                            try{
+                                cfp.setContentObject(bestSlots);
+                            }catch(IOException e){
+                                e.printStackTrace();
+                            }
+                            cfp.setConversationId("meeting-scheduling");
+                            cfp.setReplyWith("cfp" + System.currentTimeMillis()); //unique value
+                            myAgent.send(cfp);
+                            System.out.println(getAID().getLocalName() + ": Sent call for proposal");
 
-                        mt = MessageTemplate.and(MessageTemplate.MatchConversationId("meeting-scheduling"),
-                                MessageTemplate.MatchInReplyTo(cfp.getReplyWith()));
-                        step = 1;
+                            mt = MessageTemplate.and(MessageTemplate.MatchConversationId("meeting-scheduling"),
+                                    MessageTemplate.MatchInReplyTo(cfp.getReplyWith()));
+                            step = 1;
+                        }
                     }
                     break;
                 case 1:
