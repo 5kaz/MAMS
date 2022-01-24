@@ -8,11 +8,13 @@ public class Slot<Day,Int> implements Comparable<Slot>,Serializable{
   private Day day;
   private Int hour;
   private Double preference;
+  private long timeBooked;
 
   public Slot(Day day, Int hour, Double preference) {
     this.day = day;
     this.hour = hour;
     this.preference = preference;
+    this.timeBooked = 0;
   }
   public void setDay(Day day){
       this.day = day;
@@ -23,6 +25,7 @@ public class Slot<Day,Int> implements Comparable<Slot>,Serializable{
   public void setPreference(Double preference){
       this.preference = preference;
   }
+  public void setTimeBooked(long timeBooked) {this.timeBooked = timeBooked;}
 
   public Day getDay() { return day; }
   public Int getHour() { return hour; }
@@ -31,6 +34,11 @@ public class Slot<Day,Int> implements Comparable<Slot>,Serializable{
   //This function returns true if the compared slot is compatible with the actual slot
   public boolean isFitting(Slot o){
     return (this.day == o.getDay() && this.hour.equals(o.getHour()) && this.preference > 0.0 && o.getPreference() > 0.0);
+
+  }
+
+  public boolean isBooked(){
+    return (System.currentTimeMillis() - this.timeBooked) <= 4000;
   }
 
   @Override

@@ -210,7 +210,13 @@ public class AgentMAMS extends Agent {
                 } catch (FIPAException fe) {
                     fe.printStackTrace();
                 }
-                myAgent.addBehaviour(new RequestPerformer());
+                if(nbresult==1)
+                {
+                    System.out.println("   " + getLocalName()+": My contact list is empty or incorrect!");
+                }
+                else {
+                    myAgent.addBehaviour(new RequestPerformer());
+                }
             }
         });
     }
@@ -239,31 +245,43 @@ public class AgentMAMS extends Agent {
                     confirmCnt = 0;
                     othersSlots = new HashMap<AID,Slot[]>();
                     //Setup bestSlots list
-                    bestSlots[0] = availableSlots.get(startIndex);
-                    bestSlots[1] = availableSlots.get(startIndex+1);
-                    System.out.println(getAID().getLocalName() + ": [Iteration "+iteration+"]  My two best slots are : "+bestSlots[0]+bestSlots[1]+"\n");
-                    //call for proposal (CFP) to found sellers
-                    ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
-                    for (int i = 0; i < agents.length; ++i) {
-                        if (getAID().equals(agents[i]) == false){
-                            cfp.addReceiver(agents[i]);
-                            System.out.println(getAID().getLocalName() + ": Added "+agents[i].getLocalName()+" to receivers ");
-                        }
+                    if(availableSlots.get(startIndex).isBooked()||availableSlots.get(startIndex+1).isBooked())
+                    {
+                        startIndex += 1;
+                        iteration++;
+                        step = 0;
                     }
-                    //we provide the bestSlots
-                    try{
-                        cfp.setContentObject(bestSlots);
-                    }catch(IOException e){
-                        e.printStackTrace();
-                    }
-                    cfp.setConversationId("meeting-scheduling");
-                    cfp.setReplyWith("cfp" + System.currentTimeMillis()); //unique value
-                    myAgent.send(cfp);
-                    System.out.println(getAID().getLocalName() + ": Sent call for proposal");
+                    else
+                    {
+                        bestSlots[0] = availableSlots.get(startIndex);
+                        availableSlots.get(startIndex).setTimeBooked(System.currentTimeMillis());
+                        bestSlots[1] = availableSlots.get(startIndex+1);
+                        availableSlots.get(startIndex+1).setTimeBooked(System.currentTimeMillis());
 
-                    mt = MessageTemplate.and(MessageTemplate.MatchConversationId("meeting-scheduling"),
-                            MessageTemplate.MatchInReplyTo(cfp.getReplyWith()));
-                    step = 1;
+                        System.out.println(getAID().getLocalName() + ": [Iteration "+iteration+"]  My two best slots are : "+bestSlots[0]+bestSlots[1]+"\n");
+                        //call for proposal (CFP) to found sellers
+                        ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
+                        for (int i = 0; i < agents.length; ++i) {
+                            if (getAID().equals(agents[i]) == false){
+                                cfp.addReceiver(agents[i]);
+                                System.out.println(getAID().getLocalName() + ": Added "+agents[i].getLocalName()+" to receivers ");
+                            }
+                        }
+                        //we provide the bestSlots
+                        try{
+                            cfp.setContentObject(bestSlots);
+                        }catch(IOException e){
+                            e.printStackTrace();
+                        }
+                        cfp.setConversationId("meeting-scheduling");
+                        cfp.setReplyWith("cfp" + System.currentTimeMillis()); //unique value
+                        myAgent.send(cfp);
+                        System.out.println(getAID().getLocalName() + ": Sent call for proposal");
+
+                        mt = MessageTemplate.and(MessageTemplate.MatchConversationId("meeting-scheduling"),
+                                MessageTemplate.MatchInReplyTo(cfp.getReplyWith()));
+                        step = 1;
+                    }
                     break;
                 case 1:
                     //collect proposals
@@ -293,9 +311,9 @@ public class AgentMAMS extends Agent {
                             
                         }
                     } else {
-                        block(3000);
+                        block(5000);
                         if((timeout - System.currentTimeMillis())<=0&&step==1){
-                            step=2;
+                            step=4;
                         }
                     }
                     break;
@@ -444,7 +462,14 @@ public class AgentMAMS extends Agent {
                 fittingSlots = new ArrayList<Slot>();
                 for (Slot s : availableSlots){
                     if (s.isFitting(initiatorBestSlots[0]) || s.isFitting(initiatorBestSlots[1])){
-                        fittingSlots.add(s);
+                        if (!s.isBooked()){
+                            fittingSlots.add(s);
+                            s.setTimeBooked(System.currentTimeMillis());
+                            System.out.println("   "+getLocalName() +": The Slot is not already booked :) ");
+                        }
+                        else {
+                            System.out.println("   "+getLocalName() +": The Slot is already booked for now I can't propose it again");
+                        }
                     }
                 }
                 Slot[] slots = new Slot[fittingSlots.size()];
