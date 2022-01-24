@@ -38,7 +38,7 @@ public class Slot<Day,Int> implements Comparable<Slot>,Serializable{
   }
 
   public boolean isBooked(){
-    return (System.currentTimeMillis() - this.timeBooked) <= 4000;
+    return (System.currentTimeMillis() - this.timeBooked) <= 2000;
   }
 
   @Override

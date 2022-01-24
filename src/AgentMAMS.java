@@ -43,7 +43,7 @@ public class AgentMAMS extends Agent {
         Object[] args = getArguments();
         if(args!=null) {
             for (int i = 0; i < args.length; i++) {
-                System.out.println(this.getAID().getLocalName()+"MES CONTACTS"+args[i]+"\n");
+                System.out.println(this.getAID().getLocalName()+" : agent "+args[i]+" is in my contact list");
                 contacts.add(args[i].toString());
             }
         }
@@ -99,19 +99,19 @@ public class AgentMAMS extends Agent {
                         day = ("Sunday");
                         break;
                 }
-                //System.out.println(day+" at "+y+" h my preference is " + CAL[i][y]);
             }
             //Setup available slots list
             calToArrayList(CAL);
-
-            //System.out.println(getAID().getLocalName() + ": My available slots are : \n"+availableSlots);
             
             //Sort the ArrayList by preference
-            Collections.sort(availableSlots, Collections.reverseOrder()); 
+            sortAvailableList();
                 
-            
             myGui = new AgentGui(this, this.CAL);
             myGui.display();
+    }
+
+    public void sortAvailableList(){
+        Collections.sort(availableSlots, Collections.reverseOrder()); 
     }
 
     public void calToArrayList(Double[][] CAL){
@@ -185,6 +185,8 @@ public class AgentMAMS extends Agent {
         addBehaviour(new OneShotBehaviour() {
             public void action() {
                 System.out.println(getAID().getLocalName() + ": Launched procedure for meeting scheduling");
+                //Sort list of available slots
+                sortAvailableList();
                 //Update list of available agents
                 DFAgentDescription template = new DFAgentDescription();
                 ServiceDescription sd = new ServiceDescription();
@@ -369,15 +371,12 @@ public class AgentMAMS extends Agent {
                                 System.out.println(getAID().getLocalName()+": Received all the confirmations");
                                 updateCal(bestSlot);
                                 availableSlots.remove(bestSlot);
-                                // TODO
-                                // Ajouter le slot dans une liste de slots réservés
                                 step = 4;
                             }
                         } else {
                             //If the response is NEGATIVE
-                            //TODO
+                            System.out.println(getAID().getLocalName()+": Problem occured with at least one agent involved");
                         }
-                            //this state ends the purchase process
                     } else {
                         block();
                     }
@@ -385,17 +384,12 @@ public class AgentMAMS extends Agent {
             }
         }
 
-        public boolean done() { //TODO
-            if (step == 2) {
-            }
-            if (step == 3){
-            }
-            //process terminates here if purchase has failed (title not on sale) or book was successfully bought
+        public boolean done() {
+            //process terminates here if scheduling has failed or meeting was successfully scheduled
             return (step == 4);
         }
 
         private Slot findDeal(HashMap<AID,Slot[]> othersSlots){
-            //Slot bestSlot = new Slot();
             ArrayList<Slot> possibleSlots = new ArrayList<Slot>();
             Double[] pref = new Double[2];
             
@@ -419,7 +413,8 @@ public class AgentMAMS extends Agent {
                 }
                 
             }
-            System.out.println("Prefs : "+pref[0] + pref[1]);            
+            System.out.println("Prefs[0]: "+pref[0]);
+            System.out.println("Prefs[1]: "+pref[1]);            
             switch (possibleSlots.size()){
                 case 0:
                     return null;
@@ -459,6 +454,8 @@ public class AgentMAMS extends Agent {
             MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.CFP);
             ACLMessage msg = myAgent.receive(mt);
             if (msg != null) {
+                //Sort list of available slots
+                sortAvailableList();
                 initiatorBestSlots = new Slot[2];
                 try{
                     initiatorBestSlots = (Slot[])msg.getContentObject();
@@ -490,7 +487,6 @@ public class AgentMAMS extends Agent {
                     try{
                         //Sending only the two best slots 
                         System.out.println(getAID().getLocalName()+": Sending my slots to "+msg.getSender().getLocalName());
-                        //TODO
                         reply.setContentObject(slots);
                     }catch(IOException e){
                         e.printStackTrace();
