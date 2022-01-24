@@ -43,7 +43,7 @@ public class AgentMAMS extends Agent {
         Object[] args = getArguments();
         if(args!=null) {
             for (int i = 0; i < args.length; i++) {
-                //System.out.println("MES CONTACTS"+args[i]);
+                System.out.println(this.getAID().getLocalName()+"MES CONTACTS"+args[i]+"\n");
                 contacts.add(args[i].toString());
             }
         }
@@ -196,7 +196,7 @@ public class AgentMAMS extends Agent {
                     allAgents = new ArrayList<AID>();
                     for (int i = 0; i < result.length; ++i) {
                         for (String contact:contacts){
-                            if(Objects.equals(contact,result[i].getName().getLocalName())){
+                            if(Objects.equals(contact,result[i].getName().getLocalName()) || Objects.equals(getAID().getLocalName(),result[i].getName().getLocalName()) ){
                                 allAgents.add(result[i].getName());
                                 nbresult++;
                             }
