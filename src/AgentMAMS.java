@@ -361,7 +361,7 @@ public class AgentMAMS extends Agent {
                     break;
 
                 case 3:
-                    //agents confirms the transaction
+                    
                     reply = myAgent.receive(mt);
                     if (reply != null) {
                         if (reply.getPerformative() == ACLMessage.INFORM) {
@@ -421,7 +421,7 @@ public class AgentMAMS extends Agent {
                 case 1:
                     if (pref[0] == null){
                         if (pref[1] >= treshold){
-                            return possibleSlots.get(0); 
+                            return possibleSlots.get(1); 
                         }
                     }
                     else{
@@ -440,8 +440,11 @@ public class AgentMAMS extends Agent {
                             bestSlotIndex = i;
                         }
                     }
-                    System.out.println("Calculated best preference : "+highestPref);
-                    return (possibleSlots.get(bestSlotIndex));
+                    if (highestPref >= treshold){
+                        System.out.println("Calculated best preference : "+highestPref);
+                        return (possibleSlots.get(bestSlotIndex));
+                    }
+                    return null;
             }  
 
         }
