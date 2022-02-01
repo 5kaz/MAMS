@@ -421,7 +421,7 @@ public class AgentMAMS extends Agent {
                 case 1:
                     if (pref[0] == null){
                         if (pref[1] >= treshold){
-                            return possibleSlots.get(1); 
+                            return possibleSlots.get(0); 
                         }
                     }
                     else{
